@@ -35,6 +35,7 @@ public enum FileMode {
 
 public protocol IFile{
     func exists() -> Bool
+    func delete() -> Bool
     func readAsBytes() throws -> Data
     func readAsString() throws -> String
     func getPath() -> String
@@ -125,5 +126,15 @@ public final class File: IFile, Sendable {
             throw FileError.encodingFailed
         }
         return try writeAsBytes(data, mode: mode)
+    }
+    
+    public func delete() -> Bool {
+        do {
+            try FileManager.default.removeItem(at: url)
+            return true
+        } catch {
+            // Handle any errors occurring during file deletion
+            return false
+        }
     }
 }
