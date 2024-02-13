@@ -33,7 +33,7 @@ public enum FileMode {
     case writeOnlyAppend
 }
 
-public protocol IFile{
+public protocol IFile:Codable,Sendable{
     func exists() -> Bool
     func delete() -> Bool
     func readAsBytes() throws -> Data
@@ -44,7 +44,8 @@ public protocol IFile{
     func createSync( recursive:Bool,  exclusive:Bool ) throws
 }
 
-public final class File: IFile, Sendable {
+public  struct File: IFile {
+    
     public  func createSync(recursive: Bool, exclusive: Bool) throws {
         if FileManager.default.fileExists(atPath: url.path) {
             if exclusive {
@@ -66,10 +67,13 @@ public final class File: IFile, Sendable {
     
     private let url: URL
     
+    func getUrl()->URL{
+        return url
+    }
+    
     public init(url: URL) {
         self.url = url
     }
-    
     
     public func exists() -> Bool {
         return FileManager.default.fileExists(atPath: url.path)
@@ -137,4 +141,41 @@ public final class File: IFile, Sendable {
             return false
         }
     }
+}
+extension File:ReferenceConvertible{
+    public func _bridgeToObjectiveC() -> NSURL {
+        return NSURL(fileURLWithPath: url.path, isDirectory: false)
+    }
+    
+    public static func _forceBridgeFromObjectiveC(_ source: NSURL, result: inout File?) {
+        result = File(url: source as URL)
+    }
+    
+    public static func _conditionallyBridgeFromObjectiveC(_ source: NSURL, result: inout File?) -> Bool {
+        result = File(url: source as URL)
+        return true
+    }
+    
+    public static func _unconditionallyBridgeFromObjectiveC(_ source: NSURL?) -> File {
+        return File(url: source! as URL)
+    }
+    
+    public var debugDescription: String {
+        return "\(url.path)"
+    }
+    
+    public var description: String {
+        return "\(url.path)"
+    }
+    
+    public typealias _ObjectiveCType = NSURL
+    
+    public typealias ReferenceType = NSURL
+}
+
+extension File:Equatable{
+    public static func == (lhs: File, rhs: File) -> Bool {
+        return  lhs.getUrl() == rhs.getUrl()
+    }
+    
 }
