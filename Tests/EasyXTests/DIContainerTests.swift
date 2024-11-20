@@ -372,9 +372,9 @@ class DIContainerTests: XCTestCase {
     }
     // Given
     let scope = "testScope"
-    container.register(RegisterAnonymousFactoryWithScope.self, scope: scope) { _ in
-      RegisterAnonymousFactoryWithScope(string: "Scoped Anonymous Factory")
-    }
+      container.register(RegisterAnonymousFactoryWithScope.self, factory:  { _ in
+          RegisterAnonymousFactoryWithScope(string: "Scoped Anonymous Factory")
+      }, scope: scope)
 
     // Then
     XCTAssertEqual(
