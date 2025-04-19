@@ -19,7 +19,7 @@ public final class SmartDIImplementation<Route: Equatable>: ISmartDI {
   let logger: Logger = .init(subsystem: "SmartDI", category: "SmartDI")
   private let router: () -> [Route]
   private let container: DIContainer
-
+  @MainActor
   public init(router: @escaping () -> [Route], container: DIContainer = .shared) {
     self.router = router
     self.container = container

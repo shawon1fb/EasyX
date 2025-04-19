@@ -16,10 +16,11 @@ public protocol ISmartDI {
     -> T
 }
 extension ISmartDI {
+  @MainActor
   static var shared: ISmartDI {
     return SmartDI.shared.getDI()
   }
-
+  @MainActor
   func find<T>(name: String? = nil) -> T {
     return SmartDI.DI.find(name: name)
   }
@@ -27,22 +28,25 @@ extension ISmartDI {
 
 public class SmartDI {
   // Singleton instance
+  @MainActor
   public static let shared = SmartDI()
+  @MainActor
   public static var DI: ISmartDI {
     shared.getDI()
   }
-    
+
   private init() {}
 
   // Move the static functionality here
+  @MainActor
   public func registerSelf<R: Equatable>(stacks: @escaping () -> [R]) {
     let smartDI = SmartDIImplementation(router: stacks)
     DIContainer.shared.register(ISmartDI.self, factory: { _ in smartDI })
   }
 
   // Helper method to get DI instance
+  @MainActor
   public func getDI() -> ISmartDI {
     return try! DIContainer.shared.resolve(ISmartDI.self)
   }
 }
-

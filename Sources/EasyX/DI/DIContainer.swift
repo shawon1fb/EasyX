@@ -4,7 +4,6 @@
 //
 //  Created by shahanul on 29/10/24.
 //
-
 import Foundation
 
 public enum DIError: Error, Equatable {
@@ -57,6 +56,7 @@ public class DIContainer {
   private var registrations: [ObjectIdentifier: [String: AnyServiceFactory]] = [:]
   private var scopedRegistrations: [String: [ObjectIdentifier: [String: AnyServiceFactory]]] = [:]
 
+  @MainActor
   public static let shared = DIContainer()
 
   private init() {}
@@ -169,7 +169,6 @@ public class DIContainer {
     scopedRegistrations[scope] = nil
   }
 
- 
 }
 
 extension Thread {
@@ -187,114 +186,109 @@ extension Thread {
 
 extension DIContainer: Resolver {}
 
-
-
 //MARK: Printers
 extension DIContainer {
-    // Prints all registered services in a formatted way, organized by scope
-    public func printRegistrations() {
-      print("\n=== DIContainer Registrations ===\n")
+  // Prints all registered services in a formatted way, organized by scope
+  public func printRegistrations() {
+    print("\n=== DIContainer Registrations ===\n")
 
-      // Print global registrations
-      print("Global Registrations:")
-      if registrations.isEmpty {
-        print("  No global registrations")
-      } else {
-        for (typeId, nameDict) in registrations.sorted(by: {
+    // Print global registrations
+    print("Global Registrations:")
+    if registrations.isEmpty {
+      print("  No global registrations")
+    } else {
+      for (typeId, nameDict) in registrations.sorted(by: {
+        String(describing: $0.key) < String(describing: $1.key)
+      }) {
+        let typeName = String(describing: typeId)
+        print("  TypeID: \(typeName)")
+        print("  Type: \(typeId.getTypeName())")
+        for (name, _) in nameDict.sorted(by: { $0.key < $1.key }) {
+          let displayName = name.isEmpty ? "default" : name
+          print("    - Name: \(displayName)")
+        }
+      }
+    }
+
+    // Print scoped registrations
+    print("\nScoped Registrations:")
+    if scopedRegistrations.isEmpty {
+      print("  No scoped registrations")
+    } else {
+      for (scope, typeDict) in scopedRegistrations.sorted(by: { $0.key < $1.key }) {
+        print("\nScope: \(scope)")
+        for (typeId, nameDict) in typeDict.sorted(by: {
           String(describing: $0.key) < String(describing: $1.key)
         }) {
           let typeName = String(describing: typeId)
-            print("  TypeID: \(typeName)")
-            print("  Type: \(typeId.getTypeName())")
+          print("  TypeID: \(typeName)")
+          print("  Type: \(typeId.getTypeName())")
           for (name, _) in nameDict.sorted(by: { $0.key < $1.key }) {
             let displayName = name.isEmpty ? "default" : name
             print("    - Name: \(displayName)")
           }
         }
       }
+    }
+    print("\n===============================\n")
+  }
 
-      // Print scoped registrations
-      print("\nScoped Registrations:")
-      if scopedRegistrations.isEmpty {
-        print("  No scoped registrations")
-      } else {
-        for (scope, typeDict) in scopedRegistrations.sorted(by: { $0.key < $1.key }) {
-          print("\nScope: \(scope)")
-          for (typeId, nameDict) in typeDict.sorted(by: {
-            String(describing: $0.key) < String(describing: $1.key)
-          }) {
-            let typeName = String(describing: typeId)
-            print("  TypeID: \(typeName)")
-            print("  Type: \(typeId.getTypeName())")
-            for (name, _) in nameDict.sorted(by: { $0.key < $1.key }) {
-              let displayName = name.isEmpty ? "default" : name
-              print("    - Name: \(displayName)")
-            }
-          }
+  // Prints registered types in a more readable format
+  public func printRegisteredTypes() {
+    print("\n=== Registered Types ===")
+
+    // Print global registrations
+    print("\nGlobal Registrations:")
+    for (typeId, nameDict) in registrations {
+      let typeName = typeId.getTypeName()
+      print("- \(typeName)")
+      for (name, _) in nameDict {
+        let displayName = name.isEmpty ? "default" : name
+        print("  └─ \(displayName)")
+      }
+    }
+
+    // Print scoped registrations
+    print("\nScoped Registrations:")
+    for (scope, typeDict) in scopedRegistrations {
+      print("\nScope: \(scope)")
+      for (typeId, nameDict) in typeDict {
+        let typeName = typeId.getTypeName()
+        print("- \(typeName)")
+        for (name, _) in nameDict {
+          let displayName = name.isEmpty ? "default" : name
+          print("  └─ \(displayName)")
         }
       }
-      print("\n===============================\n")
     }
-    
-    // Prints registered types in a more readable format
-    public func printRegisteredTypes() {
-        print("\n=== Registered Types ===")
-        
-        // Print global registrations
-        print("\nGlobal Registrations:")
-        for (typeId, nameDict) in registrations {
-            let typeName = typeId.getTypeName()
-            print("- \(typeName)")
-            for (name, _) in nameDict {
-                let displayName = name.isEmpty ? "default" : name
-                print("  └─ \(displayName)")
-            }
-        }
-        
-        // Print scoped registrations
-        print("\nScoped Registrations:")
-        for (scope, typeDict) in scopedRegistrations {
-            print("\nScope: \(scope)")
-            for (typeId, nameDict) in typeDict {
-                let typeName = typeId.getTypeName()
-                print("- \(typeName)")
-                for (name, _) in nameDict {
-                    let displayName = name.isEmpty ? "default" : name
-                    print("  └─ \(displayName)")
-                }
-            }
-        }
-        print("\n=====================")
-    }
+    print("\n=====================")
+  }
 }
-
-
-
 
 extension ObjectIdentifier {
-    /// Attempts to get a human-readable type name from the ObjectIdentifier
-    func getTypeName() -> String {
-        // Using runtime reflection to get the type name
-        let typePtr = unsafeBitCast(self, to: Any.Type.self)
-        let typeName = String(describing: typePtr)
-        
-        // Clean up the type name
-        return cleanupTypeName(typeName)
-    }
-    
-    private func cleanupTypeName(_ rawName: String) -> String {
-        // Remove common prefixes and suffixes that might appear in the type name
-        var name = rawName
-            .replacingOccurrences(of: "Swift.", with: "")
-            .replacingOccurrences(of: "ObjectIdentifier", with: "")
-        
-        // If the name contains a module prefix (e.g., "MyModule.MyType"),
-        // you might want to keep only the type name
-        if let lastDotIndex = name.lastIndex(of: ".") {
-            name = String(name[name.index(after: lastDotIndex)...])
-        }
-        
-        return name
-    }
-}
+  /// Attempts to get a human-readable type name from the ObjectIdentifier
+  func getTypeName() -> String {
+    // Using runtime reflection to get the type name
+    let typePtr = unsafeBitCast(self, to: Any.Type.self)
+    let typeName = String(describing: typePtr)
 
+    // Clean up the type name
+    return cleanupTypeName(typeName)
+  }
+
+  private func cleanupTypeName(_ rawName: String) -> String {
+    // Remove common prefixes and suffixes that might appear in the type name
+    var name =
+      rawName
+      .replacingOccurrences(of: "Swift.", with: "")
+      .replacingOccurrences(of: "ObjectIdentifier", with: "")
+
+    // If the name contains a module prefix (e.g., "MyModule.MyType"),
+    // you might want to keep only the type name
+    if let lastDotIndex = name.lastIndex(of: ".") {
+      name = String(name[name.index(after: lastDotIndex)...])
+    }
+
+    return name
+  }
+}
