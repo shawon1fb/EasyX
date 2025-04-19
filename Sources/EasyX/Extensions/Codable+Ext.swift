@@ -24,6 +24,33 @@ public extension Encodable {
         return string
     }
     
+    /// Converts the encodable object to a JSON string, returning nil if encoding fails
+    /// - Parameters:
+    ///   - prettyPrinted: Whether to format the JSON with indentation and line breaks
+    ///   - sortedKeys: Whether to sort the keys in the JSON output
+    /// - Returns: JSON string representation of the object or nil if encoding fails
+    func toJSONString(prettyPrinted: Bool = false, sortedKeys: Bool = false) -> String? {
+        let encoder = JSONEncoder()
+        var formatting: JSONEncoder.OutputFormatting = []
+        
+        if prettyPrinted {
+            formatting.insert(.prettyPrinted)
+        }
+        
+        if sortedKeys {
+            formatting.insert(.sortedKeys)
+        }
+        
+        encoder.outputFormatting = formatting
+        
+        do {
+            let data = try encoder.encode(self)
+            return String(data: data, encoding: .utf8)
+        } catch {
+            return nil
+        }
+    }
+    
     /// Converts the encodable object to a dictionary
     /// - Parameter encoder: JSONEncoder to use (default is JSONEncoder with default settings)
     /// - Returns: Dictionary representation of the object
@@ -68,7 +95,7 @@ public extension Decodable {
     /// Creates a new instance from a dictionary
     /// - Parameters:
     ///   - dictionary: Dictionary to decode
-    ///   - decoder: JSONDecoder to use (default is JSONDecoder with default settings)
+    ///   ///   - decoder: JSONDecoder to use (default is JSONDecoder with default settings)
     /// - Returns: Instance of the decodable type
     /// - Throws: Decoding errors
     static func from(dictionary: [String: Any], using decoder: JSONDecoder = JSONDecoder()) throws -> Self {
@@ -107,7 +134,7 @@ public enum JSONEncoderFactory {
     ///   - keyEncodingStrategy: Strategy for encoding keys
     ///   - outputFormatting: JSON output formatting options
     /// - Returns: A newly configured JSONEncoder
-    public  static func makeEncoder(
+    public static func makeEncoder(
         dateStrategy: DateEncodingStrategy = .iso8601,
         keyEncodingStrategy: JSONEncoder.KeyEncodingStrategy = .useDefaultKeys,
         outputFormatting: JSONEncoder.OutputFormatting = []
@@ -139,7 +166,7 @@ public enum JSONEncoderFactory {
 /// Factory for creating configured JSONDecoders
 /// Thread-safe by design - creates a new decoder instance each time
 public enum JSONDecoderFactory {
-    public  enum DateDecodingStrategy {
+    public enum DateDecodingStrategy {
         case iso8601
         case secondsSince1970
         case millisecondsSince1970
@@ -151,7 +178,7 @@ public enum JSONDecoderFactory {
     ///   - dateStrategy: Strategy for decoding Date values
     ///   - keyDecodingStrategy: Strategy for decoding keys
     /// - Returns: A newly configured JSONDecoder
-    public  static func makeDecoder(
+    public static func makeDecoder(
         dateStrategy: DateDecodingStrategy = .iso8601,
         keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy = .useDefaultKeys
     ) -> JSONDecoder {
@@ -176,26 +203,27 @@ public enum JSONDecoderFactory {
     }
 }
 
+/*
 // MARK: - Usage Examples
 
 // Example of a struct implementing Codable
-//struct User: Codable, Sendable {
-//    let id: Int
-//    let name: String
-//    let email: String
-//    let createdAt: Date
-//    
-//    // Custom coding keys example
-//    enum CodingKeys: String, CodingKey {
-//        case id
-//        case name
-//        case email
-//        case createdAt = "created_at"
-//    }
-//}
+struct User: Codable, Sendable {
+    let id: Int
+    let name: String
+    let email: String
+    let createdAt: Date
+    
+    // Custom coding keys example
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case email
+        case createdAt = "created_at"
+    }
+}
 
 // Example use
-/*
+
  // Creating an object
  let user = User(id: 1, name: "John Doe", email: "john@example.com", createdAt: Date())
  
@@ -204,9 +232,19 @@ public enum JSONDecoderFactory {
      // To JSON Data
      let jsonData = try user.toData()
      
-     // To JSON String
+     // To JSON String (throws version)
      let jsonString = try user.toJSONString()
      print(jsonString)
+     
+     // To JSON String (non-throwing version with pretty printing)
+     if let prettyJson = user.toJSONString(prettyPrinted: true) {
+         print(prettyJson)
+     }
+     
+     // To JSON String (non-throwing with pretty printing and sorted keys)
+     if let formattedJson = user.toJSONString(prettyPrinted: true, sortedKeys: true) {
+         print(formattedJson)
+     }
      
      // To Dictionary
      let dictionary = try user.toDictionary()
