@@ -4,21 +4,29 @@
 import PackageDescription
 
 let package = Package(
-    name: "EasyX",
-    platforms: [.iOS(.v15), .macOS(.v11)],
-    products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
-        .library(
-            name: "EasyX",
-            targets: ["EasyX"]),
-    ],
-    targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
-        .target(
-            name: "EasyX"),
-        .testTarget(
-            name: "EasyXTests",
-            dependencies: ["EasyX"]),
-    ]
+  name: "EasyX",
+  platforms: [.iOS(.v15), .macOS(.v11)],
+  products: [
+    // Products define the executables and libraries a package produces, making them visible to other packages.
+    .library(
+      name: "EasyX",
+      targets: ["EasyX"])
+  ],
+  dependencies: [
+    .package(url: "https://github.com/SwifterSwift/SwifterSwift.git", from: "7.0.0")
+  ],
+  targets: [
+    // Targets are the basic building blocks of a package, defining a module or a test suite.
+    // Targets can depend on other targets in this package and products from dependencies.
+    .target(
+      name: "EasyX",
+      dependencies: [
+        "SwifterSwift"
+      ]
+    ),
+    .testTarget(
+      name: "EasyXTests",
+      dependencies: ["EasyX"]),
+  ]
+
 )
