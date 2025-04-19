@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Encodable Extensions
 
-extension Encodable {
+public extension Encodable {
     /// Converts the encodable object to Data
     /// - Parameter encoder: JSONEncoder to use (default is JSONEncoder with default settings)
     /// - Returns: Data representation of the object
@@ -40,7 +40,7 @@ extension Encodable {
 
 // MARK: - Decodable Extensions
 
-extension Decodable {
+public extension Decodable {
     /// Creates a new instance from JSON data
     /// - Parameters:
     ///   - data: JSON data to decode
@@ -79,7 +79,7 @@ extension Decodable {
 
 // MARK: - Deep Copy Extension (for types that conform to both Encodable and Decodable)
 
-extension Encodable where Self: Decodable {
+public extension Encodable where Self: Decodable {
     /// Creates a deep copy of the object by encoding and decoding
     /// - Returns: A new instance with the same data
     /// - Throws: Encoding/decoding errors
@@ -93,8 +93,8 @@ extension Encodable where Self: Decodable {
 
 /// Factory for creating configured JSONEncoders
 /// Thread-safe by design - creates a new encoder instance each time
-enum JSONEncoderFactory {
-    enum DateEncodingStrategy {
+public enum JSONEncoderFactory {
+    public enum DateEncodingStrategy {
         case iso8601
         case secondsSince1970
         case millisecondsSince1970
@@ -107,7 +107,7 @@ enum JSONEncoderFactory {
     ///   - keyEncodingStrategy: Strategy for encoding keys
     ///   - outputFormatting: JSON output formatting options
     /// - Returns: A newly configured JSONEncoder
-    static func makeEncoder(
+    public  static func makeEncoder(
         dateStrategy: DateEncodingStrategy = .iso8601,
         keyEncodingStrategy: JSONEncoder.KeyEncodingStrategy = .useDefaultKeys,
         outputFormatting: JSONEncoder.OutputFormatting = []
@@ -138,8 +138,8 @@ enum JSONEncoderFactory {
 
 /// Factory for creating configured JSONDecoders
 /// Thread-safe by design - creates a new decoder instance each time
-enum JSONDecoderFactory {
-    enum DateDecodingStrategy {
+public enum JSONDecoderFactory {
+    public  enum DateDecodingStrategy {
         case iso8601
         case secondsSince1970
         case millisecondsSince1970
@@ -151,7 +151,7 @@ enum JSONDecoderFactory {
     ///   - dateStrategy: Strategy for decoding Date values
     ///   - keyDecodingStrategy: Strategy for decoding keys
     /// - Returns: A newly configured JSONDecoder
-    static func makeDecoder(
+    public  static func makeDecoder(
         dateStrategy: DateDecodingStrategy = .iso8601,
         keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy = .useDefaultKeys
     ) -> JSONDecoder {
